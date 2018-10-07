@@ -189,3 +189,34 @@
   - 로그인이 됬다면 목록을 출력하게 했다. 
   - Cookie를 검사해서 logined=true 라는 형식이 오면 userDB에 있는 모든 유저의 정보를 출력하게 했다.
   - 정적인 자원이 아닌 동적자원이므로 StringBuilder를 사용하여 html 문서 형식을 동적으로 생성한 뒤 그 문자열 전체를 바이트 배열로 바꿔 전송했다. 
+  
+### 요구사항 7 - css 지원하기
+  - 브라우저가 서버에 자원을 요청 할 때, 모든 정적 자원을 각각 요청하게 된다.
+  - 정적자원에는 html만 있는 게 아니라, css, javascript, image 등등이 있다.
+  - 이 content type들을 모두 지원해줘야 한다.
+  - css를 지원하기 위해 먼저 url 주소가 ".css"로 끝나는 요청이 오면 해당 css 파일을 바이트 배열로 바꿔서 body에 담았다.
+  - 기존의 헤더메소드를 사용하면 응답 헤더에 content type이 "text/html"로 가기때문에 브라우저에서 응답받은 파일이 html인줄 알고 css로 렌더링하지 않는다.
+  - 그렇기 때문에 응답 헤더에 content type을 "text/css"로 변경해서 응답하도록 메소드를 수정하였다.
+  ```java
+  // css 요청인지 판별해서 body에 css파일을 담아주고 헤더 정보를 바꿔주는 부분
+  else if (url.endsWith(".css")) {
+      body = Files.readAllBytes(new File("./webapp"+url).toPath());
+      contentType = "text/css";
+  }
+  ```
+  ```java
+  // 하드코딩 되어있던 content type 부분을 String contentType 파라미터로 받아서 전달시키도록 수정하였다. 
+  private void response200Header(DataOutputStream dos, int lengthOfBodyContent, String cookie, String contentType) {
+          try {
+              dos.writeBytes("HTTP/1.1 200 OK \r\n");
+              dos.writeBytes("Content-Type: " + contentType + ";charset=utf-8\r\n");
+              dos.writeBytes("Content-Length: "+lengthOfBodyContent+"\r\n");
+              if (!"".equals(cookie)) {
+                  dos.writeBytes("Set-Cookie: " + cookie + "\r\n");
+              }
+              dos.writeBytes("\r\n");
+          } catch(IOException e) {
+              log.error(e.getMessage());
+          }
+      }
+  ```  
