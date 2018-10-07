@@ -45,27 +45,30 @@ public class RequestHandler extends Thread {
 
             if(method.equals("post")) {
                 User user = new User();
-                int len2 = Integer.parseInt(headerMap.get("Content-Length"));
-                char[] body = new char[len2];
-                br.read(body,0,len2);
+                if(url.startsWith("/user/create")) {
+                    int len2 = Integer.parseInt(headerMap.get("Content-Length"));
+                    char[] body = new char[len2];
+                    br.read(body,0,len2);
 
-                String params = String.copyValueOf(body);
-                String[] str = params.split("[&]");
-                for (String s : str) {
-                    String[] res = s.split("=");
-                    String key = res[0];
-                    String val = res[1];
-                    if ("userId".equals(key)) {
-                        user.setUserId(val);
+                    String params = String.copyValueOf(body);
+                    String[] str = params.split("[&]");
+                    for (String s : str) {
+                        String[] res = s.split("=");
+                        String key = res[0];
+                        String val = res[1];
+                        if ("userId".equals(key)) {
+                            user.setUserId(val);
+                        }
+                        if ("password".equals(key)) {
+                            user.setPassword(val);
+                        }
+                        if ("name".equals(key)) {
+                            user.setName(val);
+                        }
                     }
-                    if ("password".equals(key)) {
-                        user.setPassword(val);
-                    }
-                    if ("name".equals(key)) {
-                        user.setName(val);
-                    }
+                    response302Header(dos);
+                    return;
                 }
-                System.out.println(user);
             }
 
             byte[] body = null;
@@ -74,15 +77,22 @@ public class RequestHandler extends Thread {
                 body = Files.readAllBytes(new File("./webapp"+url).toPath());
             } else if("/user/form.html".equals(url)) {
                 body = Files.readAllBytes(new File("./webapp"+url).toPath());
-            } else if(url.startsWith("/user/create")) {
-
-
             } else  {
                 body = "Hello World".getBytes();
             }
 
             response200Header(dos, body.length);
             responseBody(dos, body);
+        } catch(IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response302Header(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Redirect \r\n");
+            dos.writeBytes("Location: "+"/index.html");
+            dos.writeBytes("\r\n");
         } catch(IOException e) {
             log.error(e.getMessage());
         }
