@@ -137,10 +137,10 @@ public class RequestHandler extends Thread {
                     url = "/user/login.html";
                     body = Files.readAllBytes(new File("./webapp"+url).toPath());
                 }
-            } /*else if (url.endsWith(".css")) {
+            } else if (url.endsWith(".css")) {
                 body = Files.readAllBytes(new File("./webapp"+url).toPath());
                 contentType = "text/css";
-            }*/ else {
+            } else {
                 body = "Hello World".getBytes();
             }
 
