@@ -15,6 +15,10 @@ import java.util.Map;
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
     private Socket connection;
+    private static Map<String, User> userDB;
+    static {
+        userDB = new HashMap<>();
+    }
 
     public RequestHandler(Socket connection) {
         this.connection = connection;
@@ -43,6 +47,8 @@ public class RequestHandler extends Thread {
                 headerMap.put(temp[0],temp[1].trim());
             }
 
+            String cookie = "";
+
             if(method.equals("post")) {
                 User user = new User();
                 if(url.startsWith("/user/create")) {
@@ -66,8 +72,41 @@ public class RequestHandler extends Thread {
                             user.setName(val);
                         }
                     }
+                    userDB.put(user.getUserId(), user);
                     response302Header(dos);
                     return;
+                }
+
+                if(url.startsWith("/user/login")) {
+                    int len2 = Integer.parseInt(headerMap.get("Content-Length"));
+                    char[] body = new char[len2];
+                    br.read(body,0,len2);
+
+                    String params = String.copyValueOf(body);
+                    String[] str = params.split("[&]");
+                    String userId = "";
+                    String password = "";
+                    for (String s : str) {
+                        String[] res = s.split("=");
+                        String key = res[0];
+                        String val = res[1];
+                        if ("userId".equals(key)) {
+                            userId = val;
+                        }
+                        if ("password".equals(key)) {
+                            password = val;
+                        }
+                    }
+                    if (userDB.containsKey(userId)) {
+                        String password2 = userDB.get(userId).getPassword();
+                        if (password.equals(password2)) {
+                            cookie = "logined=true";
+                            url = "/index.html";
+                        }
+                    } else {
+                        cookie = "logined=false";
+                        url = "/user/login_failed.html";
+                    }
                 }
             }
 
@@ -77,11 +116,15 @@ public class RequestHandler extends Thread {
                 body = Files.readAllBytes(new File("./webapp"+url).toPath());
             } else if("/user/form.html".equals(url)) {
                 body = Files.readAllBytes(new File("./webapp"+url).toPath());
+            } else if("/user/login.html".equals(url)) {
+                body = Files.readAllBytes(new File("./webapp"+url).toPath());
+            } else if("/user/login_failed.html".equals(url)) {
+                body = Files.readAllBytes(new File("./webapp"+url).toPath());
             } else  {
                 body = "Hello World".getBytes();
             }
 
-            response200Header(dos, body.length);
+            response200Header(dos, body.length, cookie);
             responseBody(dos, body);
         } catch(IOException e) {
             log.error(e.getMessage());
@@ -109,11 +152,14 @@ public class RequestHandler extends Thread {
 
     }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
+    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, String cookie) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: "+lengthOfBodyContent+"\r\n");
+            if (!"".equals(cookie)) {
+                dos.writeBytes("Set-Cookie: " + cookie + "\r\n");
+            }
             dos.writeBytes("\r\n");
         } catch(IOException e) {
             log.error(e.getMessage());
