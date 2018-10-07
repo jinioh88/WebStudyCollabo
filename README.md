@@ -112,4 +112,80 @@
                 }
                 System.out.println(user);
     }
-  ``` "# study" 
+  ``` 
+
+### 요구사항4 - 302 status code 적용
+  - 사용자가 정상적으로 회원가입 처리 후 User 객체가 생성이 된다면 리다이렉트 해줘야 한다.
+  - 리다이렉트를 하지 않는다면, 새로고침 등으로 인한 원치 않은 결과가 실행된다.
+  - 리다이렉트를 위해 응답헤더에 302코드를 추가해 주었다.
+  ```java
+  private void response302Header(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Redirect \r\n");
+            dos.writeBytes("Location: "+"/index.html");
+            dos.writeBytes("\r\n");
+        } catch(IOException e) {
+            log.error(e.getMessage());
+        }
+  }
+  ```
+
+### 요구사항5 - 로그인하기
+  - 로그인 성공 시 index.html로 이동하고, 실패 시 /user/login_failed.html로 이동한다. 
+  - 로그인이 성공하면 헤더에 Cookie 정보를 Set-Cookie: logined-true로 추가해주고, 실패하면 SetCookie: logined=false로 해주었다.
+  - post로 전송된 로그인 정보를 userDB에 있는 User 객체와 비교해 일치하면 로그인 성공유무를 판별하였다. 
+  ```java
+  public class User {
+    private String userId;
+    private String password;
+    private String name;
+    // 게터세터...
+  }  
+  ```
+  ```java
+  // RequestHander 안에 static 전역 변수 선언
+  // Map으로 디비 형식으로 사용하였다.
+
+    private static Map<String, User> userDB;
+    static {
+        userDB = new HashMap<>();
+    }
+    // ...
+    if(url.startsWith("/user/login")) {
+                    int len2 = Integer.parseInt(headerMap.get("Content-Length"));
+                    char[] body = new char[len2];
+                    br.read(body,0,len2);
+
+                    String params = String.copyValueOf(body);
+                    String[] str = params.split("[&]");
+                    String userId = "";
+                    String password = "";
+                    for (String s : str) {
+                        String[] res = s.split("=");
+                        String key = res[0];
+                        String val = res[1];
+                        if ("userId".equals(key)) {
+                            userId = val;
+                        }
+                        if ("password".equals(key)) {
+                            password = val;
+                        }
+                    }
+                    if (userDB.containsKey(userId)) {
+                        String password2 = userDB.get(userId).getPassword();
+                        if (password.equals(password2)) {
+                            cookie = "logined=true";
+                            url = "/index.html";
+                        }
+                    } else {
+                        cookie = "logined=false";
+                        url = "/user/login_failed.html";
+                    }
+                }
+    }
+  ```
+
+### 요구사항6 - 사용자 목록출력
+  - 로그인이 됬다면 목록을 출력하게 했다. 
+  - Cookie를 검사해서 logined=true 라는 형식이 오면 userDB에 있는 모든 유저의 정보를 출력하게 했다.
+  - 정적인 자원이 아닌 동적자원이므로 StringBuilder를 사용하여 html 문서 형식을 동적으로 생성한 뒤 그 문자열 전체를 바이트 배열로 바꿔 전송했다. 
