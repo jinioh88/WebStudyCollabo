@@ -120,6 +120,22 @@ public class RequestHandler extends Thread {
                 body = Files.readAllBytes(new File("./webapp"+url).toPath());
             } else if("/user/login_failed.html".equals(url)) {
                 body = Files.readAllBytes(new File("./webapp"+url).toPath());
+            } else if("/user/list".equals(url)) {
+                Boolean logined = false;
+                String reqCookie = headerMap.get("Cookie");
+                String[] cookies = reqCookie.split(";");
+                for (String c : cookies) {
+                    if (c.startsWith("logined=")) {
+                        String s = c.split("=")[1];
+                        logined = Boolean.parseBoolean(s);
+                    }
+                }
+                if (logined) {
+                    body = getUserList();
+                } else {
+                    url = "/user/login.html";
+                    body = Files.readAllBytes(new File("./webapp"+url).toPath());
+                }
             } else  {
                 body = "Hello World".getBytes();
             }
@@ -129,6 +145,28 @@ public class RequestHandler extends Thread {
         } catch(IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    private byte[] getUserList() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<!DOCTYPE html>\n" +
+                "<html lang=\"kr\">\n" +
+                "<head>\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "<table>\n");
+
+        for (String id : userDB.keySet()) {
+            builder.append("<tr>\n" +
+                            "<td>"+userDB.get(id).getName()+"</td>" +
+                            "</tr>\n");
+        }
+
+        builder.append("</table>\n" +
+                "</body>\n" +
+                "</html>");
+
+        return builder.toString().getBytes();
     }
 
     private void response302Header(DataOutputStream dos) {
