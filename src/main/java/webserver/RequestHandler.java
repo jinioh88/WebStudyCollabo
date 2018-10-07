@@ -47,6 +47,7 @@ public class RequestHandler extends Thread {
                 headerMap.put(temp[0],temp[1].trim());
             }
 
+            String contentType = "text/html";
             String cookie = "";
 
             if(method.equals("post")) {
@@ -136,11 +137,14 @@ public class RequestHandler extends Thread {
                     url = "/user/login.html";
                     body = Files.readAllBytes(new File("./webapp"+url).toPath());
                 }
-            } else  {
+            } /*else if (url.endsWith(".css")) {
+                body = Files.readAllBytes(new File("./webapp"+url).toPath());
+                contentType = "text/css";
+            }*/ else {
                 body = "Hello World".getBytes();
             }
 
-            response200Header(dos, body.length, cookie);
+            response200Header(dos, body.length, cookie, contentType);
             responseBody(dos, body);
         } catch(IOException e) {
             log.error(e.getMessage());
@@ -190,10 +194,10 @@ public class RequestHandler extends Thread {
 
     }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, String cookie) {
+    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, String cookie, String contentType) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Type: " + contentType + ";charset=utf-8\r\n");
             dos.writeBytes("Content-Length: "+lengthOfBodyContent+"\r\n");
             if (!"".equals(cookie)) {
                 dos.writeBytes("Set-Cookie: " + cookie + "\r\n");
