@@ -1,5 +1,138 @@
 # 양파껍질 협업 스터디
 
+## 문자열 계산기 구현을 통한 통합 테스트와 리펙토링
+### main() 메서드를 활용한 테스트의 문제점
+  ```java
+  public class Calculator {
+    int add(int i, int j) {
+        return i+j;
+    }
+
+    int subtract(int i, int j) {
+        return i-j;
+    }
+
+    int multiply(int i, int j) {
+        return i*j;
+    }
+
+    int divide(int i, int j) {
+        return i/j;
+    }
+
+    public static void main(String[] args) {
+        Calculator cal = new Calculator();
+        System.out.println(cal.add(3,4));
+        System.out.println(cal.subtract(5,3));
+        System.out.println(cal.multiply(2,5));
+        System.out.println(cal.divide(6,2));
+    }
+  }
+  ```
+  - main()은 두가지 목적으로 나뉜다.
+    - 첫번째는 프로그래밍을 실행하기 위한 목적
+    - 두번째는 프로덕션 코드가 정상 동작 하는지 테스트 목적
+  - 위 코드의 문제점은 프로덕션 코드와 테스트 코드가 같은 클래스에 위치한다는 것이다. 
+  - 테스트 코드를 따로 분리 해 보자.
+  ```java
+  public class CalculatorTest {
+    public static void main(String[] args) {
+        Calculator cal = new Calculator();
+        System.out.println(cal.add(3,4));
+        System.out.println(cal.subtract(5,3));
+        System.out.println(cal.multiply(2,5));
+        System.out.println(cal.divide(6,2));
+    }
+  }
+  ```
+  - 위 방식은 메인이 복잡하면 복잡해 질수록 유지 보수에 부담이 된다. 
+  ```java
+  public class CalculatorTest {
+    public static void main(String[] args) {
+        Calculator cal = new Calculator();
+        add(cal);
+        subtract(cal);
+        multiply(cal);
+        divide(cal);
+
+    }
+
+    private static void add(Calculator cal) {
+        System.out.println(cal.add(3,4));
+
+    }
+
+    private static void subtract(Calculator cal) {
+        System.out.println(cal.subtract(5,3));
+
+    }
+
+    private static void multiply(Calculator cal) {
+        System.out.println(cal.multiply(2,5));
+
+    }
+
+    private static void divide(Calculator cal) {
+        System.out.println(cal.divide(6,2));
+
+    }
+  }
+  ```
+  - 위 방식은 모든 테스트를 해야 하는 불합리한 작업이다.
+  - 클래스가 가지고 있는 모든 메서드에 관심이 있는게 아니라 현재 내가 구현하고 있는 메서드에만 집중하고 싶다. 
+  - 또 다른 문제는 테스트 결과를 항상 콘솔에 출력해 수동으로 확인하는 점이다. 
+  - 위 문제를 해결하기 위해 JUnit을 사용한다. 
+
+### JUnit을 활용해 main() 메서드 문제점 극복
+  - 단 한번에 메서드 하나에만 집중
+  ```java
+  public class CalculatorTest {
+    @Test
+    public void add() {
+        Calculator cal = new Calculator();
+        System.out.println(cal.add(6,3));
+    }
+
+    @Test
+    public void subtract() {
+        Calculator cal = new Calculator();
+        System.out.println(cal.subtract(3,1));
+    }
+  }
+  ```
+    - 위와 같이 구현하면 각각의 테스트 메서드를 독립적으로 실행할 수 있다. 
+    - 하지만 위 문제는 실행결과를 직접 눈으로 확인해야 한다. 
+  - 결과 값을 눈이 아닌 프로그램을 통해 자동화
+    - JUnit은 assertEquals() 메서드를 제공한다. 
+  ```java
+  import org.junit.Test;
+  import static org.junit.Assert.assertEquals;
+
+  public class CalculatorTest {
+    @Test
+    public void add() {
+        Calculator cal = new Calculator();
+        assertEquals(9, cal.add(6,3));
+    }
+
+    @Test
+    public void subtract() {
+        Calculator cal = new Calculator();
+        assertEquals(1, cal.subtract(6,5));
+    }
+  }
+  ```
+  - assertEquals(), assertTrue(), assertFalse(), assertNull(), assertNotNull() 등이 있다. 
+  - JUnit에서 초기화는 @Before 에노테이션을 활용하는걸 추천한다.
+  ```java
+    private Calculator cal;
+    
+    @Before
+    public void setup() {
+        cal = new Calculator();
+    }
+  ```    
+
 ## 웹 서버 실습
 ### 요구사항1. index.html 응답하기
   - WebServer.class, RequestHandler.clas를 작성했다.
