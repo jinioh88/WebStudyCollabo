@@ -133,6 +133,31 @@
     }
   ```    
 
+ ### 테스트와 리팩토링을 통한 문자열 계산기 구현 
+  - 메서드는 한가지 책임만 가지도록 구현하자.
+  - 들여쓰기 깊이는 1단계로 유지하자
+  - else를 가급적 쓰지 말자.
+  - 요구사항을 작은 단위로 나누자.
+  - 모든 단계의 끝은 리팩토링
+    - 구현 ==> 테스트 ==> 리팩토링 과정을 거치자.
+  -  2.4.4.4 r구분자 쉼표 콜론 사용하기
+  ```java
+  private String[] splits(String text) {
+        if(text.startsWith("//") && text.contains("\n")) {
+            int index = text.indexOf("//");
+            int endIndex = text.indexOf("\n");
+            String findSplit = text.substring((index+2),endIndex);
+            String resText = text.substring(endIndex+1);
+            return resText.split(findSplit);
+        }
+
+        return text.split(",|:");
+  }
+  ```
+  - 위는 개별적으로 짜본것이고, 책에서는 Matcher와 Pattern을 사용해 구현하였다. 역시 자바 선배님들이 짜논 함수는 잘 활용해야 편하다..
+  - **TODO : Matcher, Pattern 공부하기**
+  
+
 ## 웹 서버 실습
 ### 요구사항1. index.html 응답하기
   - WebServer.class, RequestHandler.clas를 작성했다.
