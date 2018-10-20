@@ -1,9 +1,9 @@
 import db.DataBase;
+import http.HttpRequest;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.HttpRequestUtils;
-import utils.IOUtils;
 
 import java.io.*;
 import java.net.Socket;
@@ -25,53 +25,29 @@ public class RequestHandler extends Thread {
         log.debug("New Client Connect! Connected IP : {}, Port : {}",connection.getInetAddress(), connection.getPort());
 
         try(InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(in,"UTF-8"));
-            String line = br.readLine();
-            log.debug("request line : {}",line);
+            HttpRequest request = new HttpRequest(in);
+            String path = getDefaultPath(request.getPath());
 
-            if(line==null) {
-                return;
-            }
-
-            String[] tokens = line.split(" ");
-            int contentLength = 0;
-            boolean logined = false;
-            while(!line.equals("")) {
-                line = br.readLine();
-                log.debug("header : {}",line);
-                if(line.contains("Content-Length")) {
-                    contentLength = getContentLength(line);
-                }
-
-                if(line.contains("Cookie")) {
-                    logined = isLogin(line);
-                }
-            }
-
-            String url = tokens[1];
-            if(url.equals("/user/create")) {
-                String body = IOUtils.readData(br, contentLength);
-                Map<String,String> params = HttpRequestUtils.parseQueryString(body);
-                User user = new User(params.get("userId"), params.get("password"), params.get("name"), params.get("email"));
+            if("/user/create".equals(path)) {
+                User user = new User(request.getParameter("userId"), request.getParameter("password")
+                        , request.getParameter("name"), request.getParameter("email"));
                 DataBase.addUser(user);
                 DataOutputStream dos = new DataOutputStream(out);
                 response302Header(dos, "/index.html");
-            } else if("/user/login".equals(url)) {
-                String body = IOUtils.readData(br, contentLength);
-                Map<String, String> params = HttpRequestUtils.parseQueryString(body);
-                User user = DataBase.findUserById(params.get("userId"));
+            } else if("/user/login".equals(path)) {
+                User user = DataBase.findUserById(request.getParameter("userId"));
                 if(user==null) {
                     responseResource(out, "/user/login_failed.html");
                     return;
                 }
-                if(user.getPassword().equals(params.get("password"))) {
+                if(user.getPassword().equals(request.getParameter("password"))) {
                     DataOutputStream dos = new DataOutputStream(out);
                     response302LoginSuccessHeader(dos);
                 } else {
                     responseResource(out, "/user/login_failed.html");
                 }
-            } else if("/user/list".equals(url)) {
-                if(!logined) {
+            } else if("/user/list".equals(path)) {
+                if(!isLogin(request.getHeaders("Cookie"))) {
                     responseResource(out,"/user/login.html");
                     return;
                 }
@@ -90,17 +66,28 @@ public class RequestHandler extends Thread {
                 DataOutputStream dos = new DataOutputStream(out);
                 response200Header(dos,body.length);
                 responseBody(dos,body);
-            } else if(url.endsWith(".css")) {
-                DataOutputStream dos = new DataOutputStream(out);
-                byte[] body = Files.readAllBytes(new File("./webapp"+url).toPath());
-                response200CssHeader(dos, body.length);
-                responseBody(dos, body);
+            } else if(path.endsWith(".css")) {
+                responseCssResource(out, path);
             } else {
-                responseResource(out, url);
+                responseResource(out, path);
             }
         } catch(IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    private void responseCssResource(OutputStream out, String path) throws IOException {
+        DataOutputStream dos = new DataOutputStream(out);
+        byte[] body = Files.readAllBytes(new File("./webapp"+path).toPath());
+        response200CssHeader(dos, body.length);
+        responseBody(dos, body);
+    }
+
+    private String getDefaultPath(String path) {
+        if(path.equals("/")) {
+            return "index.html";
+        }
+        return path;
     }
 
     private void response200CssHeader(DataOutputStream dos, int lengthOfBodyContent) {

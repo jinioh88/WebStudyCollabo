@@ -5,6 +5,6 @@ public enum HttpMethod {
     POST;
 
     public boolean isPost() {
-        return this == POST;
+        return this==POST;
     }
 }
