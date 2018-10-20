@@ -64,8 +64,11 @@ public class RequestHandler extends Thread {
                 DataOutputStream dos = new DataOutputStream(out);
                 response200Header(dos,body.length);
                 responseBody(dos,body);
+<<<<<<< HEAD
             } else if(path.endsWith(".css")) {
                 responseCssResource(out,path);
+=======
+>>>>>>> parent of 42bc0fe... 요구사항7 - 책버전
             } else {
                 responseResource(out, path);
             }
@@ -74,6 +77,7 @@ public class RequestHandler extends Thread {
         }
     }
 
+<<<<<<< HEAD
 
     private String getDefualtPath(String path) {
         if(path.equals("/")) {
@@ -95,6 +99,11 @@ public class RequestHandler extends Thread {
 
     private boolean isLogin(String cookieValue) {
         Map<String, String> cookies = HttpRequestUtils.parseCookies(cookieValue);
+=======
+    private boolean isLogin(String line) {
+        String[] headerTokens = line.split(":");
+        Map<String, String> cookies = HttpRequestUtils.parseCookies(headerTokens[1].trim());
+>>>>>>> parent of 42bc0fe... 요구사항7 - 책버전
         String value = cookies.get("logined");
         if(value==null) {
             return false;
