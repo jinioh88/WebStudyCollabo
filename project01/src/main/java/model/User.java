@@ -58,4 +58,8 @@ public class User {
                 ", email='" + email + '\'' +
                 '}';
     }
+
+    public boolean login(String password) {
+        return this.password.equals(password);
+    }
 }
