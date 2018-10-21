@@ -9,11 +9,11 @@ import static org.junit.Assert.assertEquals;
 public class RequestLineTest {
     @Test
     public void create_method() {
-        RequestLine line = new RequestLine("GET /index.html HTTP/1.1");
+        RequestLine line = new RequestLine("GET /home.html HTTP/1.1");
         assertEquals(HttpMethod.GET,line.getMethod());
-        assertEquals("/index.html",line.getPath());
-        line = new RequestLine("POST /index.html HTTP/1.1");
-        assertEquals("/index.html", line.getPath());
+        assertEquals("/home.html",line.getPath());
+        line = new RequestLine("POST /home.html HTTP/1.1");
+        assertEquals("/home.html", line.getPath());
     }
 
     @Test
