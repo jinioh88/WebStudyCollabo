@@ -1,42 +1,18 @@
 package controller;
 
 import db.DataBase;
-import http.HttpRequest;
-import http.HttpResponse;
-import model.User;
-import utils.HttpRequestUtils;
 
-import java.util.Collection;
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-public class ListUserController extends AbstractController {
+public class ListUserController implements Controller {
+
     @Override
-    protected void doGet(HttpRequest request, HttpResponse response) {
-        if(!isLogin(request.getHeaders("Cookie"))) {
-            response.sendRedirect("/user/login.html");
-            return;
+    public String excute(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if(!UserSessionUtils.isLogined(request.getSession())) {
+            return "redirect:/users/loginForm";
         }
-        Collection<User> users = DataBase.findAll();
-        StringBuilder sb = new StringBuilder();
-        sb.append("<table border='1'>");
-        for(User user : users) {
-            sb.append("<tr>");
-            sb.append("<td>"+user.getUserId()+"</td>");
-            sb.append("<td>"+user.getName()+"</td>");
-            sb.append("<td>"+user.getEmail()+"</td>");
-            sb.append("</tr>");
-        }
-        sb.append("</table>");
-        response.forwardBody(sb.toString());
-    }
-
-    private boolean isLogin(String line) {
-        String[] headerTokens = line.split(":");
-        Map<String, String> cookies = HttpRequestUtils.parseCookies(headerTokens[1].trim());
-        String value = cookies.get("logined");
-        if(value==null) {
-            return false;
-        }
-        return Boolean.parseBoolean(value);
+        request.setAttribute("users", DataBase.findAll());
+        return "/user/list.jsp";
     }
 }
